@@ -1,0 +1,177 @@
+# INSTRUCTIONS
+#
+# 1. Start the pods using either podman or docker:
+#
+#      podman compose -f docker/catalog-auth-s3-otel-jdbc/docker-compose.yml up
+#      docker compose -f docker/catalog-auth-s3-otel-jdbc/docker-compose.yml up
+#
+# 2. Using spark-sql: attach to the running spark-sql container:
+#
+#      podman attach $(podman ps -q --filter name=spark-sql)
+#      docker attach $(docker ps -q --filter name=spark-sql)
+#
+#    You may not see Spark's prompt immediately, type ENTER to see it. Then run the "standard smoketest SQL":
+#
+#      CREATE NAMESPACE nessie.sales;
+#      CREATE NAMESPACE nessie.eng;
+#
+#      USE nessie.sales;
+#      CREATE TABLE city (C_CITYKEY BIGINT, C_NAME STRING, N_NATIONKEY BIGINT, C_COMMENT STRING) USING iceberg PARTITIONED BY (bucket(16, N_NATIONKEY));
+#      INSERT INTO city VALUES (1, 'a', 1, 'comment');
+#      SELECT * FROM city;
+#
+#      USE nessie.eng;
+#      CREATE TABLE city (C_CITYKEY BIGINT, C_NAME STRING, N_NATIONKEY BIGINT, C_COMMENT STRING) USING iceberg PARTITIONED BY (bucket(16, N_NATIONKEY));
+#      INSERT INTO city VALUES (2, 'b', 2, 'comment');
+#      SELECT * FROM city;
+#
+# 3. Using Nessie CLI: attach to the running nessie-cli container:
+#
+#      podman attach $(podman ps -q --filter name=nessie-cli)
+#      docker attach $(docker ps -q --filter name=nessie-cli)
+#
+#    Then run the following commands:
+#
+#      LIST CONTENTS ON main;
+#      SHOW NAMESPACE sales;
+#      SHOW NAMESPACE eng;
+#      SHOW TABLE sales.city;
+#      SHOW TABLE eng.city;
+#
+
+services:
+
+  nessie:
+    image: ghcr.io/projectnessie/nessie:0.107.4
+    ports:
+      # API port
+      - "19120:19120"
+      # Management port (metrics and health checks)
+      - "9000:9000"
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      # This example uses Postgres as the version store.
+      - nessie.version.store.type=JDBC
+      - nessie.version.store.persist.jdbc.datasource=postgresql
+      - quarkus.datasource.postgresql.jdbc.url=jdbc:postgresql://${POSTGRES_USER}:5432/catalog
+      - quarkus.datasource.postgresql.username=${POSTGRES_USER}
+      - quarkus.datasource.postgresql.password=${POSTGRES_PASSWORD}
+      # This example uses MinIO as the object store.
+      - nessie.catalog.default-warehouse=datalake
+      - nessie.catalog.warehouses.datalake.location=s3://datalake-bronze-zone/
+      - nessie.catalog.service.s3.default-options.region=us-east-1
+      - nessie.catalog.service.s3.default-options.path-style-access=true
+      - nessie.catalog.service.s3.default-options.access-key=urn:nessie-secret:quarkus:nessie.catalog.secrets.access-key
+      - nessie.catalog.secrets.access-key.name=${MINIO_ACCESS_KEY_NAME}
+      - nessie.catalog.secrets.access-key.secret=${MINIO_ACCESS_KEY_SECRET}
+      # MinIO endpoint
+      - nessie.catalog.service.s3.default-options.endpoint=http://minio:9000/
+      # Disable auth
+      - nessie.server.authorization.enabled=false
+    healthcheck:
+      test: "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /q/health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"
+      interval: 5s
+      timeout: 2s
+      retries: 15
+
+  minio:
+    image: quay.io/minio/minio:latest
+    ports:
+      # API port
+      - "9002:9000"
+      # MinIO UI, browse to http://localhost:9092 to view the MinIO Object Browser
+      - "9092:9090"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+      - MINIO_ADDRESS=:9000
+      - MINIO_CONSOLE_ADDRESS=:9090
+    volumes:
+      - ./storage:/mnt/storage
+    command: minio server /mnt/storage
+    healthcheck:
+      test: "bash -c '[[ \"$(exec 3<>/dev/tcp/localhost/9000 && echo -e '\"'\"'GET /minio/health/live HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n'\"'\"' >&3 && cat <&3 | head -n 1)\" == *\"200 OK\"* ]] || exit 1'"
+      interval: 5s
+      timeout: 2s
+      retries: 15
+
+  # Create MinIO bucket
+  minio-setup:
+    image: quay.io/minio/minio:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: /bin/bash
+    restart: "no"
+    command: [
+      "-c",
+      "mc alias set myminio http://minio:9000/ minioadmin minioadmin ; mc admin info myminio ; mc mb myminio/datalake-bronze-zone --ignore-existing"
+      ]
+
+  postgres:
+    image: postgres:18.3
+    ports:
+      - "5432:5432"
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: catalog
+      POSTGRES_INITDB_ARGS: "--encoding UTF8 --data-checksums"
+    # /docker-entrypoint-initdb.d
+    healthcheck:
+      test: "pg_isready -U postgres"
+      interval: 5s
+      timeout: 2s
+      retries: 15
+
+  nessie-cli:
+      image: ghcr.io/projectnessie/nessie-cli:0.107.4
+      depends_on:
+        nessie:
+          condition: service_healthy
+      stdin_open: true
+      tty: true
+      command: [
+        --uri, "http://nessie:19120/iceberg/main",
+        --client-option, "nessie.enable-api-compatibility-check=false",
+        # Options for the internal Nessie client
+        # --client-option, "nessie.authentication.type=OAUTH2",
+        # --client-option, "nessie.authentication.oauth2.client-id=client1",
+        # --client-option, "nessie.authentication.oauth2.client-secret=s3cr3t",
+        # --client-option, "nessie.authentication.oauth2.client-scopes=catalog sign",
+        # Options for the internal Iceberg REST client
+        --client-option, "uri=http://nessie:19120/iceberg/main",
+        # --client-option, "credential=client1:s3cr3t",
+        # --client-option, "scope=catalog sign",
+
+      ]
+  # spark-sql:
+  #   image: apache/spark:3.5.8-java17-python3
+  #   depends_on:
+  #     nessie:
+  #       condition: service_healthy
+  #   stdin_open: true
+  #   tty: true
+  #   ports:
+  #     - "4040-4045:4040-4045"
+  #   healthcheck:
+  #     test: "curl localhost:4040"
+  #     interval: 5s
+  #     retries: 15
+  #   command: [
+  #     /opt/spark/bin/spark-sql,
+  #     --packages, "org.projectnessie.nessie-integrations:nessie-spark-extensions-3.5_2.12:0.99.0,org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.6.0,software.amazon.awssdk:bundle:2.28.17,software.amazon.awssdk:url-connection-client:2.28.17",
+  #     --conf, "spark.sql.extensions=org.projectnessie.spark.extensions.NessieSparkSessionExtensions,org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+  #     --conf, "spark.sql.catalog.nessie=org.apache.iceberg.spark.SparkCatalog",
+  #     --conf, "spark.sql.catalog.nessie.type=rest",
+  #     --conf, "spark.sql.catalog.nessie.uri=http://nessie:19120/iceberg/main",
+  #     --conf, "spark.sql.catalog.nessie.credential=client1:s3cr3t",
+  #     --conf, "spark.sql.catalog.nessie.scope=catalog sign",
+  #     --conf, "spark.sql.catalogImplementation=in-memory",
+  #   ]
+  #   volumes:
+  #     - ~/.ivy2:/home/spark/.ivy2
