@@ -9,7 +9,7 @@ spec:
       app.kubernetes.io/name: minio
       app.kubernetes.io/component: storage
       app.kubernetes.io/instance: dp
-  serviceName: dp-minio-hl
+  serviceName: dp-minio-endpoint
   replicas: 1
   template:
     metadata:
@@ -25,7 +25,7 @@ spec:
         args: ["/data"]
         resources:
           requests:
-            cpu: 1.0
+            cpu: 500m
             memory: 256Mi
         ports:
         - containerPort: 9000
