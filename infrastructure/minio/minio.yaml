@@ -27,19 +27,16 @@ spec:
           requests:
             cpu: 500m
             memory: 256Mi
-        ports:
-        - containerPort: 9000
-        - containerPort: 9090
         env:
           - name: MINIO_ROOT_USER
             valueFrom:
               secretKeyRef:
-                name: infra-secrets
+                name: minio-secrets
                 key: minio_user
           - name: MINIO_ROOT_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: infra-secrets
+                name: minio-secrets
                 key: minio_password
           - name: MINIO_ADDRESS
             value: ":9000"
@@ -62,34 +59,6 @@ spec:
         volumeMounts:
         - name: dp-minio-volume
           mountPath: /data
-
-      - name: minio-startup
-        image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
-        command:
-        - "/bin/bash"
-        - "-c"
-        - |
-          set -e
-
-          until curl -f http://localhost:9000/minio/health/ready; do
-            echo 'Waiting for MinIO...'
-            sleep 2
-          done
-          mc alias set myminio http://localhost:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
-          mc admin info myminio
-          mc mb myminio/datalake-bronze-zone --ignore-existing
-        restartPolicy: Never
-        env:
-          - name: MINIO_ROOT_USER
-            valueFrom:
-              secretKeyRef:
-                name: infra-secrets
-                key: minio_user
-          - name: MINIO_ROOT_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: infra-secrets
-                key: minio_password
 
   volumeClaimTemplates:
   - metadata:

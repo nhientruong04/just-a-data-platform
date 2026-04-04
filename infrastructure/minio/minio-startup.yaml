@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dp-minio-startup
+  namespace: data-infra
+  labels:
+    app.kubernetes.io/component: ephemeral-job
+    app.kubernetes.io/part-of: minio
+    app.kubernetes.io/instance: dp
+spec:
+  parallelism: 1
+  template:
+    spec:
+      containers:
+      - name: minio-startup
+        image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+        command:
+        - "/bin/bash"
+        - "-c"
+        - |
+          set -e
+
+          until curl -f http://dp-minio-endpoint:9000/minio/health/ready; do
+            echo 'Waiting for MinIO...'
+            sleep 2
+          done
+          mc alias set myminio http://dp-minio-endpoint:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+          mc admin info myminio
+          mc mb myminio/datalake-bronze-zone --ignore-existing
+        restartPolicy: Never
+        env:
+          - name: MINIO_ROOT_USER
+            valueFrom:
+              secretKeyRef:
+                name: minio-secrets
+                key: minio_user
+          - name: MINIO_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: minio-secrets
+                key: minio_password
+      restartPolicy: Never
