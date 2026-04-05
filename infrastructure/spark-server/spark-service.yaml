@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dp-spark-server-endpoint
+  namespace: data-infra
+spec:
+  selector:
+    app.kubernetes.io/name: spark-server
+    app.kubernetes.io/component: data-engine
+    app.kubernetes.io/instance: dp
+  ports:
+  - name: thrift-server-endpoint
+    protocol: TCP
+    port: 10000
+    targetPort: 10000

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spark-thrift-config
+  namespace: data-infra
+data:
+  spark-defaults.conf: |
+    spark.sql.extensions=org.projectnessie.spark.extensions.NessieSparkSessionExtensions,org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
+    spark.sql.catalog.iceberg=org.apache.iceberg.spark.SparkCatalog
+    spark.sql.catalog.iceberg.type=rest
+    spark.sql.catalog.iceberg.uri=http://dp-nessie-endpoint:19120/iceberg/main
+    spark.sql.catalogImplementation=in-memory
+    spark.hadoop.hive.server2.authentication=NONE
+    spark.hadoop.hive.server2.enable.doAs=false
