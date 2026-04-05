@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nessie.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "nessie.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "nessie.selectorLabels" . | nindent 6 }}
+  replicas: {{ .Values.replicaCount }}
+  # TODO: rolling updates
+  template:
+    metadata:
+      labels:
+        {{- include "nessie.selectorLabels" . | nindent 8 }}
+    spec:
+      initContainers:
+      - name: minio-check
+        image: {{ .Values.initContainers.minioCheck.image }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          until wget -qO- {{ .Values.initContainers.minioCheck.url }}; do
+            echo 'Waiting for MinIO...'
+            sleep 2
+          done
+
+      containers:
+      - name: nessie
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+        resources: {{ toYaml .Values.resources | nindent 10 }}
+
+        livenessProbe: {{ toYaml .Values.livenessProbe | nindent 10 }}
+
+        readinessProbe: {{ toYaml .Values.readinessProbe | nindent 10 }}
+
+        env: {{ toYaml .Values.env | nindent 8 }}
+
+        volumeMounts:
+        - name: nessie-config
+          mountPath: /deployments/config
+
+      volumes:
+      - name: nessie-config
+        configMap:
+          name: {{ .Values.configMap.name }}

@@ -1,0 +1,70 @@
+replicaCount: 1
+
+image:
+  repository: quay.io/minio/minio
+  tag: RELEASE.2025-09-07T16-13-09Z
+  pullPolicy: IfNotPresent
+
+command:
+  - minio
+  - server
+
+args:
+  - /data
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 256Mi
+
+env:
+  minioAddress: ":9000"
+  minioConsoleAddress: ":9090"
+
+livenessProbe:
+  httpGet:
+    path: /minio/health/live
+    port: 9000
+    scheme: HTTP
+  periodSeconds: 5
+  timeoutSeconds: 2
+  failureThreshold: 15
+
+readinessProbe:
+  httpGet:
+    path: /minio/health/ready
+    port: 9000
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+service:
+  name: dp-minio-endpoint
+  ports:
+    console: 9090
+    api: 9000
+
+persistence:
+  volumeName: dp-minio-volume
+  accessMode: ReadWriteOnce
+  size: 2Gi
+  mountPath: /data
+
+auth:
+  secret:
+    name: minio-secrets
+    userKey: minio_user
+    passwordKey: minio_password
+
+startup:
+  enabled: true
+  name: dp-minio-startup
+  script: |
+    set -e
+
+    until curl -f http://dp-minio-endpoint:9000/minio/health/ready; do
+      echo 'Waiting for MinIO...'
+      sleep 2
+    done
+    mc alias set myminio http://dp-minio-endpoint:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+    mc admin info myminio
+    mc mb myminio/datalake-bronze-zone --ignore-existing

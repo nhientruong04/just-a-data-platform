@@ -1,0 +1,28 @@
+replicaCount: 1
+
+image:
+  repository: postgres
+  tag: "18.3"
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 200Mi
+
+auth:
+  user: postgres
+  database: catalog
+  secret:
+    name: metastore-secrets
+    passwordKey: postgres_password
+
+initdbArgs: --encoding UTF8 --data-checksums
+
+service:
+  name: dp-postgres-endpoint
+  port: 5432
+
+persistence:
+  volumeName: dp-nessie-postgres-volume
+  accessMode: ReadWriteOnce
+  size: 2Gi

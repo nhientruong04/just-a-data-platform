@@ -1,0 +1,77 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/projectnessie/nessie
+  pullPolicy: IfNotPresent
+  tag: 0.107.4
+
+resources:
+  limits:
+    cpu: 400m
+    memory: 400Mi
+  requests:
+    cpu: 200m
+    memory: 200Mi
+
+livenessProbe:
+  httpGet:
+    path: /q/health
+    port: 9000
+    scheme: HTTP
+  periodSeconds: 5
+  timeoutSeconds: 2
+  failureThreshold: 15
+readinessProbe:
+  httpGet:
+    path: /q/health
+    port: 9000
+  periodSeconds: 5
+  timeoutSeconds: 2
+
+initContainers:
+  enabled: true
+  minioCheck:
+    image: busybox:latest
+    url: http://dp-minio-endpoint:9000/minio/health/ready
+
+service:
+  name: dp-nessie-endpoint
+  type: ClusterIP
+  ports:
+    portal: 9000
+    api: 19120
+
+# TODO: make endpoints injected dynamically
+configMap:
+  name: nessie-config
+  applicationProperties: |
+    nessie.version.store.type=JDBC
+    nessie.version.store.persist.jdbc.datasource=postgresql
+    quarkus.datasource.postgresql.jdbc.url=jdbc:postgresql://dp-postgres-endpoint:5432/catalog
+    quarkus.datasource.postgresql.username=postgres
+    nessie.catalog.default-warehouse=datalake
+    nessie.catalog.warehouses.datalake.location=s3://datalake-bronze-zone/
+    nessie.catalog.service.s3.default-options.endpoint=http://dp-minio-endpoint:9000/
+    nessie.catalog.service.s3.default-options.region=us-east-1
+    nessie.catalog.service.s3.default-options.path-style-access=true
+    nessie.catalog.service.s3.default-options.access-key=urn:nessie-secret:quarkus:nessie.catalog.secrets.access-key
+    nessie.catalog.secrets.access-key.name=${NESSIE_CATALOG_SECRETS_ACCESS_KEY_NAME}
+    nessie.catalog.secrets.access-key.secret=${NESSIE_CATALOG_SECRETS_ACCESS_KEY_SECRET}
+    nessie.server.authorization.enabled=false
+
+env:
+- name: QUARKUS_DATASOURCE_POSTGRESQL_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: metastore-secrets
+      key: postgres_password
+- name: NESSIE_CATALOG_SECRETS_ACCESS_KEY_NAME
+  valueFrom:
+    secretKeyRef:
+      name: minio-secrets
+      key: minio_user
+- name: NESSIE_CATALOG_SECRETS_ACCESS_KEY_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: minio-secrets
+      key: minio_password
