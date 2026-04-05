@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-schema
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "fake-prod-database.labels" . | nindent 4 }}
+data:
+  init-schema.sql: |
+    CREATE TABLE IF NOT EXISTS SalesOrderHeader (
+      SalesOrderID SERIAL PRIMARY KEY,
+      OrderDate TIMESTAMP DEFAULT NOW(),
+      DueDate TIMESTAMP DEFAULT (NOW() + INTERVAL '1 day'),
+      Status SMALLINT DEFAULT 1,
+      CustomerID INT,
+      TotalDue NUMERIC(10,2),
+      ModifiedDate TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS SalesOrderDetail (
+      SalesOrderDetailID SERIAL PRIMARY KEY,
+      SalesOrderID INT REFERENCES SalesOrderHeader(SalesOrderID),
+      ProductID INT,
+      OrderQty SMALLINT,
+      UnitPrice NUMERIC(10,2),
+      LineTotal NUMERIC(10,2),
+      ModifiedDate TIMESTAMP DEFAULT NOW()
+    );

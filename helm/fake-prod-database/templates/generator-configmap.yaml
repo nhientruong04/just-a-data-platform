@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: generator-config
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "fake-prod-database.labels" . | nindent 4 }}
+data:
+  DB_HOST: postgres
+  DB_PORT: {{ .Values.postgres.port | quote }}
+  DB_NAME: {{ .Values.postgres.database | quote }}
+  SLEEP_MIN_SECONDS: {{ .Values.generator.sleepSeconds.min | quote }}
+  SLEEP_MAX_SECONDS: {{ .Values.generator.sleepSeconds.max | quote }}

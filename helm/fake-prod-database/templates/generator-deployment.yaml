@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fake-prod-database.generatorName" . }}
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "fake-prod-database.labels" . | nindent 4 }}
+    app.kubernetes.io/name: sales-generator
+    app.kubernetes.io/component: producer
+spec:
+  replicas: {{ .Values.generator.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sales-generator
+      app.kubernetes.io/component: producer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sales-generator
+        app.kubernetes.io/component: producer
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: sales-generator
+        image: {{ .Values.generator.image.repository }}:{{ .Values.generator.image.tag }}
+        imagePullPolicy: {{ .Values.generator.image.pullPolicy }}
+        envFrom:
+        - configMapRef:
+            name: generator-config
+        env:
+        - name: DB_USER
+          value: {{ .Values.postgres.auth.username | quote }}
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.postgres.auth.passwordSecret.name }}
+              key: {{ .Values.postgres.auth.passwordSecret.key }}
+        resources:
+          {{- toYaml .Values.generator.resources | nindent 10 }}

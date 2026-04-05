@@ -1,0 +1,56 @@
+namespace:
+  create: true
+  name: data-prod
+
+postgres:
+  name: postgres
+  image:
+    repository: postgres
+    tag: "16.4"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  port: 5432
+  database: postgres
+  auth:
+    username: postgres
+    passwordSecret:
+      name: metastore-secrets
+      key: postgres_password
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 5Gi
+    storageClassName: ""
+  livenessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+  readinessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+
+generator:
+  name: sales-generator
+  image:
+    repository: nhientruong/data-platform
+    tag: fake-prod-database
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 64Mi
+  sleepSeconds:
+    min: 0.5
+    max: 1.0
