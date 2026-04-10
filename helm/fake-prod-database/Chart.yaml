@@ -1,5 +1,5 @@
 apiVersion: v2
-name: fake-prod-database
+name: prod-postgres-database
 description: Fake OLTP PostgreSQL and streaming generator for ingestion testing
 type: application
 version: 0.1.0

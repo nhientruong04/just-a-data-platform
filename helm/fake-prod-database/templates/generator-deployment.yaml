@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "fake-prod-database.generatorName" . }}
+  name: {{ include "prod-postgres-database.generatorName" . }}
   namespace: {{ .Values.namespace.name }}
   labels:
-    {{- include "fake-prod-database.labels" . | nindent 4 }}
+    {{- include "prod-postgres-database.labels" . | nindent 4 }}
     app.kubernetes.io/name: sales-generator
     app.kubernetes.io/component: producer
 spec:

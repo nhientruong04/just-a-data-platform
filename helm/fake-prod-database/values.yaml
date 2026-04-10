@@ -3,7 +3,7 @@ namespace:
   name: data-prod
 
 postgres:
-  name: postgres
+  name: prod-postgres
   image:
     repository: postgres
     tag: "16.4"
@@ -14,8 +14,11 @@ postgres:
   auth:
     username: postgres
     passwordSecret:
-      name: metastore-secrets
+      name: prod-postgres-secret
       key: postgres_password
+  args:
+  - "-c"
+  - "wal_level=logical"
   resources:
     requests:
       cpu: 200m
@@ -26,7 +29,7 @@ postgres:
   persistence:
     enabled: true
     accessMode: ReadWriteOnce
-    size: 5Gi
+    size: 3.5Gi
     storageClassName: ""
   livenessProbe:
     periodSeconds: 10

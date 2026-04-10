@@ -1,17 +1,17 @@
-{{- define "fake-prod-database.name" -}}
-fake-prod-database
+{{- define "prod-postgres-database.name" -}}
+prod-postgres-db
 {{- end -}}
 
-{{- define "fake-prod-database.postgresName" -}}
+{{- define "prod-postgres-database.postgresName" -}}
 {{- .Values.postgres.name -}}
 {{- end -}}
 
-{{- define "fake-prod-database.generatorName" -}}
+{{- define "prod-postgres-database.generatorName" -}}
 {{- .Values.generator.name -}}
 {{- end -}}
 
-{{- define "fake-prod-database.labels" -}}
-app.kubernetes.io/part-of: fake-prod-database
+{{- define "prod-postgres-database.labels" -}}
+app.kubernetes.io/part-of: prod-postgres-database
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
 {{- end -}}

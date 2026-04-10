@@ -4,7 +4,7 @@ metadata:
   name: postgres-schema
   namespace: {{ .Values.namespace.name }}
   labels:
-    {{- include "fake-prod-database.labels" . | nindent 4 }}
+    {{- include "prod-postgres-database.labels" . | nindent 4 }}
 data:
   init-schema.sql: |
     CREATE TABLE IF NOT EXISTS SalesOrderHeader (
