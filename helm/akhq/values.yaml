@@ -1,0 +1,18 @@
+deployment:
+  replicaCount: 1
+
+service:
+  type: ClusterIP
+
+ingress:
+  enabled: false
+
+configuration:
+  akhq:
+    connections:
+      data-platform:
+        properties:
+          bootstrap.servers: "kafka-kafka-bootstrap.data-infra.svc.cluster.local:9092"
+        connect:
+          - name: postgres-kafka-connect
+            url: "http://postgres-kafka-connect-cluster-connect-api.data-infra.svc.cluster.local:8083"
