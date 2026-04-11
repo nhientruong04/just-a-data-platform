@@ -1,17 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres
+  name: {{ include "prod-postgres-database.serviceName" . | quote }}
   namespace: {{ .Values.namespace.name }}
   labels:
     {{- include "prod-postgres-database.labels" . | nindent 4 }}
-    app.kubernetes.io/name: postgres
+    app.kubernetes.io/name: {{ include "prod-postgres-database.serviceName" . | quote }}
 spec:
   selector:
     app.kubernetes.io/name: postgres
     app.kubernetes.io/component: database
   ports:
-  - name: postgres
-    protocol: TCP
-    port: {{ .Values.postgres.port }}
+  - port: {{ .Values.postgres.port }}
     targetPort: {{ .Values.postgres.port }}
+    protocol: TCP

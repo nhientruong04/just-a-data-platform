@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "prod-postgres-database.labels" . | nindent 4 }}
 data:
-  DB_HOST: postgres
+  DB_HOST: {{ include "prod-postgres-database.serviceName" . | quote }}
   DB_PORT: {{ .Values.postgres.port | quote }}
   DB_NAME: {{ .Values.postgres.database | quote }}
   SLEEP_MIN_SECONDS: {{ .Values.generator.sleepSeconds.min | quote }}

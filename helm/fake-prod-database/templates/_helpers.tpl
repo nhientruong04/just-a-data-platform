@@ -1,5 +1,5 @@
-{{- define "prod-postgres-database.name" -}}
-prod-postgres-db
+{{- define "prod-postgres-database.serviceName" -}}
+{{- .Values.postgres.name -}}-endpoint
 {{- end -}}
 
 {{- define "prod-postgres-database.postgresName" -}}

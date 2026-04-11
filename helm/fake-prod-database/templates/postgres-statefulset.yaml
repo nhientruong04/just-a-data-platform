@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/name: postgres
     app.kubernetes.io/component: database
 spec:
-  serviceName: postgres
+  serviceName: {{ include "prod-postgres-database.serviceName" . | quote }}
   replicas: {{ .Values.postgres.replicaCount }}
   selector:
     matchLabels:
@@ -24,9 +24,6 @@ spec:
       - name: postgres
         image: {{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}
         imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
-        ports:
-        - containerPort: {{ .Values.postgres.port }}
-          name: postgres
         args:
           {{- toYaml .Values.postgres.args | nindent 10}}
         env:
