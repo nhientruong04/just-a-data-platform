@@ -1,0 +1,23 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaConnector
+metadata:
+  name: prod-postgres-connector
+  namespace: data-infra
+  labels:
+    strimzi.io/cluster: postgres-kafka-connect-cluster
+spec:
+  class: io.debezium.connector.postgresql.PostgresConnector
+  tasksMax: 1
+  config:
+    # TODO: revise the secrets management model and change to principal-specific for each service
+    name: prod-postgres-connector
+    plugin.name: pgoutput
+    database.hostname: prod-postgres-endpoint.data-prod.svc.cluster.local
+    database.port: 5432
+    database.dbname: postgres
+    database.user: postgres
+    database.password: ${secrets:data-infra/prod-postgres-secret:postgres_password}
+    table.include.list: public.salesorderheader
+    topic.prefix: sales
+    schema.history.internal.kafka.bootstrap.servers: kafka-kafka-bootstrap:9092
+    schema.history.internal.kafka.topic: schema-history.prod-postgres

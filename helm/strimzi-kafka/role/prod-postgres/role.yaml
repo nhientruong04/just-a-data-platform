@@ -1,0 +1,10 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: debezium-connector-role
+  namespace: data-infra
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["prod-postgres-secret"]
+  verbs: ["get"]

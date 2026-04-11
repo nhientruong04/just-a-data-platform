@@ -1,0 +1,42 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaConnect
+metadata:
+  name: postgres-kafka-connect-cluster
+  namespace: data-infra
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  version: 4.2.0
+  replicas: 1
+  bootstrapServers: kafka-kafka-bootstrap:9093
+  groupId: kafka-connect-group
+  configStorageTopic: connect-configs
+  statusStorageTopic: connect-status
+  offsetStorageTopic: connect-offsets
+  resources:
+    requests:
+      cpu: 200m
+      memory: 1.5Gi
+    limits:
+      cpu: 500m
+      memory: 2Gi
+  tls:
+    trustedCertificates:
+      - secretName: kafka-cluster-ca-cert
+        pattern: "*.crt"
+  config:
+    config.providers: secrets
+    config.providers.secrets.class: io.strimzi.kafka.KubernetesSecretConfigProvider
+    config.storage.replication.factor: -1
+    offset.storage.replication.factor: -1
+    status.storage.replication.factor: -1
+  build:
+    output:
+      type: docker
+      image: docker.io/nhientruong/data-platform:debezium-postgresql-connector-3.5.0
+      pushSecret: dockerhub-secret
+    plugins:
+    - name: debezium-postgresql-connector
+      artifacts:
+      - type: tgz
+        url: https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/3.5.0.Final/debezium-connector-postgres-3.5.0.Final-plugin.tar.gz
