@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+# TODO: add a reverse proxy for accessing the UI smoothly without local port-forwarding
+metadata:
+  name: {{ include "apicurio.postgres.serviceName" . }}
+  namespace: data-infra
+  labels:
+    {{- include "apicurio.postgres.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "apicurio.postgres.selectorLabels" . | nindent 4 }}
+  ports:
+  - name: postgres
+    port: {{ .Values.postgres.port }}
+    targetPort: {{ .Values.postgres.port }}
+    protocol: TCP

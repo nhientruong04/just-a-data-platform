@@ -1,0 +1,6 @@
+apiVersion: v2
+name: apicurio
+description: Apicurio Registry for schema management
+type: application
+version: 0.1.0
+appVersion: "3.2.3"

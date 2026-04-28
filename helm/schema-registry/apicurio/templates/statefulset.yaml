@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "apicurio.postgres.fullname" . }}
+  namespace: data-infra
+  labels:
+    {{- include "apicurio.postgres.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.postgres.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "apicurio.postgres.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "apicurio.postgres.serviceName" . }}
+  template:
+    metadata:
+      labels:
+        {{- include "apicurio.postgres.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      containers:
+      - name: registry-postgres
+        image: {{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}
+        resources:
+          {{- toYaml .Values.postgres.resources | nindent 10 }}
+        env:
+        - name: POSTGRES_USER
+          value: {{ .Values.postgres.auth.username }}
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.postgres.auth.passwordSecret.name }}
+              key: {{ .Values.postgres.auth.passwordSecret.key }}
+        - name: POSTGRES_DB
+          value: {{ .Values.postgres.database }}
+        livenessProbe:
+          exec:
+            command: ["pg_isready", "-U", "{{ .Values.postgres.auth.username }}"]
+          periodSeconds: {{ .Values.postgres.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.postgres.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.postgres.livenessProbe.failureThreshold }}
+        readinessProbe:
+          exec:
+            command: ["pg_isready", "-U", "{{ .Values.postgres.auth.username }}"]
+          periodSeconds: {{ .Values.postgres.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.postgres.readinessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.postgres.readinessProbe.failureThreshold }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - {{ .Values.postgres.persistence.accessMode }}
+      {{- with .Values.postgres.persistence.storageClassName }}
+      storageClassName: {{ . | quote }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.postgres.persistence.size }}

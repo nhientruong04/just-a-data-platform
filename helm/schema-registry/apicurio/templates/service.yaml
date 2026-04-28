@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "apicurio.serviceName" . }}
+  namespace: data-infra
+  labels:
+    {{- include "apicurio.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "apicurio.selectorLabels" . | nindent 4 }}
+  ports:
+  - name: http
+    port: {{ .Values.service.port }}
+    targetPort: http
+    protocol: TCP
+  - name: management
+    port: {{ .Values.service.managementPort }}
+    targetPort: management
+    protocol: TCP

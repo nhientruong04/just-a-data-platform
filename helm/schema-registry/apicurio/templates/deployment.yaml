@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "apicurio.fullname" . }}
+  namespace: data-infra
+  labels:
+    {{- include "apicurio.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "apicurio.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "apicurio.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      containers:
+      - name: apicurio-registry
+        image: {{ .Values.registry.image.repository }}:{{ .Values.registry.image.tag }}
+        imagePullPolicy: {{ .Values.registry.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.port }}
+          protocol: TCP
+        - name: management
+          containerPort: {{ .Values.service.managementPort }}
+          protocol: TCP
+        env:
+        - name: QUARKUS_HTTP_PORT
+          value: {{ .Values.service.port | quote }}
+        - name: QUARKUS_MANAGEMENT_PORT
+          value: {{ .Values.service.managementPort | quote }}
+        - name: APICURIO_DATASOURCE_USERNAME
+          value: {{ .Values.postgres.auth.username | quote }}
+        - name: APICURIO_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.postgres.auth.passwordSecret.name }}
+              key: {{ .Values.postgres.auth.passwordSecret.key }}
+        {{- range $name, $value := .Values.registry.env }}
+        - name: {{ $name }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- with .Values.registry.envFrom }}
+        envFrom:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        livenessProbe:
+          {{- toYaml .Values.registry.livenessProbe | nindent 10 }}
+        readinessProbe:
+          {{- toYaml .Values.registry.readinessProbe | nindent 10 }}
+        resources:
+          {{- toYaml .Values.registry.resources | nindent 10 }}
+
+      - name: apicurio-ui
+        image: {{ .Values.ui.image.repository}}:{{ .Values.ui.image.tag}}
+        imagePullPolicy: {{ .Values.ui.image.pullPolicy }}
+        ports:
+        - name: ui
+          containerPort: {{ .Values.service.uiPort }}
+          protocol: TCP
+        env:
+        - name: REGISTRY_API_URL
+          value: {{ printf "http://localhost:%v/apis/registry/v3" .Values.service.port | quote }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,91 @@
+registry:
+  name: apicurio-registry
+  image:
+    repository: apicurio/apicurio-registry
+    tag: "3.2.3"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 150m
+      memory: 100Mi
+    limits:
+      cpu: 350m
+      memory: 300Mi
+  env:
+    LOG_LEVEL: INFO
+    APICURIO_STORAGE_KIND: sql
+    APICURIO_STORAGE_SQL_KIND: postgresql
+    APICURIO_DATASOURCE_URL: "jdbc:postgresql://dp-registry-postgres-endpoint:5432/registry"
+    QUARKUS_HTTP_CORS_ORIGINS: "http://localhost:8080,http://127.0.0.1:8080"
+  envFrom: []
+  livenessProbe:
+    httpGet:
+      path: /health/live
+      port: management
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+  readinessProbe:
+    httpGet:
+      path: /health/ready
+      port: management
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+
+ui:
+  image:
+    repository: apicurio/apicurio-registry-ui
+    tag: "3.2.3"
+    pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+postgres:
+  name: registry-postgres
+  image:
+    repository: postgres
+    tag: "16.4"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  port: 5432
+  database: registry
+  auth:
+    username: postgres
+    passwordSecret:
+      name: dp-registry-postgres-secret
+      key: postgres_password
+  resources:
+    requests:
+      cpu: 100m
+      memory: 150Mi
+    limits:
+      cpu: 300m
+      memory: 300Mi
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 500Mi
+  livenessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+  readinessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+
+service:
+  type: ClusterIP
+  port: 8081
+  managementPort: 9000
+  uiPort: 8080
+
+podAnnotations: {}
+podLabels: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
