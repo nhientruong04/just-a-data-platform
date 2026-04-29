@@ -9,7 +9,18 @@ spec:
   class: io.debezium.connector.postgresql.PostgresConnector
   tasksMax: 1
   config:
+    # TODO: investigate the current format of dbz messages when no schema registry configured
     # TODO: revise the secrets management model and change to principal-specific for each service
+    # TODO: investigate all possible modes for snapshot isolation
+    # TODO: investigate dbz incremental snapshot with write permission
+    # TODO: investigate dbz built-in schema update behaviors
+    snapshot.isolation.mode: serializable
+    snapshot.locking.mode: none
+    snapshot.delay.ms: 5000
+    streaming.delay.ms: 2000
+    slot.max.retries: 3
+    max.batch.size: 500
+    skipped.operations: none
     name: prod-postgres-connector
     plugin.name: pgoutput
     database.hostname: prod-postgres-endpoint.data-prod.svc.cluster.local
@@ -19,5 +30,8 @@ spec:
     database.password: ${secrets:data-infra/prod-postgres-secret:postgres_password}
     table.include.list: public.salesorderheader
     topic.prefix: sales
+    schema.name.adjustment.mode: avro
+    schema.refresh.mode: columns_diff_exclude_unchanged_toast
+    field.name.adjustment.mode: avro
     schema.history.internal.kafka.bootstrap.servers: kafka-kafka-bootstrap:9092
     schema.history.internal.kafka.topic: schema-history.prod-postgres
