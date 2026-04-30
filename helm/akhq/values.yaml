@@ -7,12 +7,36 @@ service:
 ingress:
   enabled: false
 
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 120
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 120
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 200Mi
+  limits:
+    cpu: 300m
+    memory: 400Mi
+
 configuration:
   akhq:
+    ui-options:
+      topic-data:
+        sort: NEWEST
     connections:
       data-platform:
         properties:
           bootstrap.servers: "kafka-kafka-bootstrap.data-infra.svc.cluster.local:9092"
+        schema-registry:
+          url: "http://dp-apicurio-registry-endpoint.data-infra.svc.cluster.local:8081/apis/ccompat/v7"
+          type: "confluent"
         connect:
           - name: postgres-kafka-connect
             url: "http://postgres-kafka-connect-cluster-connect-api.data-infra.svc.cluster.local:8083"
+          - name: minio-kafka-connect
+            url: "http://minio-kafka-connect-cluster-connect-api.data-infra.svc.cluster.local:8083"

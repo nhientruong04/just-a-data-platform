@@ -1,0 +1,28 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaConnector
+metadata:
+  name: minio-connector
+  namespace: data-infra
+  labels:
+    strimzi.io/cluster: minio-kafka-connect-cluster
+spec:
+  class: io.confluent.connect.s3.S3SinkConnector
+  tasksMax: 1
+  config:
+    # TODO: read about __consumer_offsets topic and check what it affect
+    # TODO: study and justify why no key and partition settings are included
+    # TODO: revise the secrets management model and change to principal-specific for each service
+    name: minio-connector
+    topics: sales.public.salesorderheader
+    timezone: Asia/Saigon
+    format.class: io.confluent.connect.s3.format.avro.AvroFormat
+    flush.size: 20
+    rotate.schedule.interval.ms: 180000
+    schema.compatibility: BACKWARD
+    s3.region: ap-southeast-1
+    s3.bucket.name: datalake-bronze-zone
+    s3.retry.backoff.ms: 800
+    storage.class: io.confluent.connect.s3.storage.S3Storage
+    topics.dir: raw-postgres
+    store.url: http://dp-minio-endpoint.data-infra.svc.cluster.local:9000
+    consumer.override.auto.offset.reset: earliest

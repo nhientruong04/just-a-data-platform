@@ -1,0 +1,67 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaConnect
+metadata:
+  name: minio-kafka-connect-cluster
+  namespace: data-infra
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  version: 4.2.0
+  replicas: 1
+  bootstrapServers: kafka-kafka-bootstrap:9093
+  groupId: minio-kafka-connect-group
+  configStorageTopic: minio-connect-configs
+  statusStorageTopic: minio-connect-status
+  offsetStorageTopic: minio-connect-offsets
+  resources:
+    requests:
+      cpu: 200m
+      memory: 1.5Gi
+    limits:
+      cpu: 500m
+      memory: 2Gi
+  tls:
+    trustedCertificates:
+    - secretName: kafka-cluster-ca-cert
+      pattern: "*.crt"
+  config:
+    config.providers: secrets
+    config.providers.secrets.class: io.strimzi.kafka.KubernetesSecretConfigProvider
+    key.converter: io.confluent.connect.avro.AvroConverter
+    key.converter.schema.registry.url: http://dp-apicurio-registry-endpoint.data-infra.svc.cluster.local:8081/apis/ccompat/v7
+    value.converter: io.confluent.connect.avro.AvroConverter
+    value.converter.schema.registry.url: http://dp-apicurio-registry-endpoint.data-infra.svc.cluster.local:8081/apis/ccompat/v7
+    config.storage.replication.factor: -1
+    offset.storage.replication.factor: -1
+    status.storage.replication.factor: -1
+  build:
+    output:
+      type: docker
+      image: docker.io/nhientruong/data-platform:confluent-s3-connector-12.1.3
+      pushSecret: dockerhub-secret
+    plugins:
+    - name: confluent-s3-connector
+      # NOTE: maven failed to include all POMs, so use this adhoc link until the bug is fixed
+      artifacts:
+      - type: zip
+        url: https://api.hub.confluent.io/api/plugins/confluentinc/kafka-connect-s3/versions/12.1.3/archive
+    - name: kafka-connect-avro-converter
+      artifacts:
+      - type: maven
+        repository: https://packages.confluent.io/maven/
+        group: io.confluent
+        artifact: kafka-connect-avro-converter
+        version: 8.2.0
+  template:
+    connectContainer:
+      env:
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: minio-secrets
+            key: minio_user
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: minio-secrets
+            key: minio_password
