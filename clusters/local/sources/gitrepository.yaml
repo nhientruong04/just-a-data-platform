@@ -5,7 +5,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 1m
-  url: ssh://git@github.com/nhientruong04/just-a-data-platform.git
+  url: https://github.com/nhientruong04/just-a-data-platform.git
   ref:
     branch: main
   secretRef:
