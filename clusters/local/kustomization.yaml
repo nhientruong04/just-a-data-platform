@@ -10,3 +10,4 @@ resources:
 - data-infra/metastore
 - data-infra/schema-registry
 - data-infra/kafka
+- data-infra/ui
