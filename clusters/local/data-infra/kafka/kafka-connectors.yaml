@@ -16,3 +16,6 @@ spec:
   - name: data-infra-kafka-connect
   - name: data-infra-platform-secrets
   - name: data-infra-prod-postgres-secret
+  - name: data-prod-fake-prod-database
+  - name: data-infra-minio
+  - name: data-infra-apicurio

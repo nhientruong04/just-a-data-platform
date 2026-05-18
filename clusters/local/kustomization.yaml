@@ -4,5 +4,9 @@ resources:
 - sources
 - namespaces
 - data-prod/secrets
+- data-prod/database
 - data-infra/secrets
+- data-infra/storage
+- data-infra/metastore
+- data-infra/schema-registry
 - data-infra/kafka

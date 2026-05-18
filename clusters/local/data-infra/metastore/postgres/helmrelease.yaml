@@ -1,0 +1,17 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: nessie-postgres
+  namespace: flux-system
+spec:
+  interval: 30m
+  releaseName: nessie-postgres
+  targetNamespace: data-infra
+  chart:
+    spec:
+      chart: ./helm/metastore/postgres
+      sourceRef:
+        kind: GitRepository
+        name: data-platform
+        namespace: flux-system
+      interval: 12h
