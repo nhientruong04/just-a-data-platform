@@ -5,3 +5,4 @@ resources:
 - namespaces
 - data-prod/secrets
 - data-infra/secrets
+- data-infra/kafka
