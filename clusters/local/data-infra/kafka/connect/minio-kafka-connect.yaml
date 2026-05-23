@@ -53,6 +53,9 @@ spec:
         artifact: kafka-connect-avro-converter
         version: 8.2.0
   template:
+    buildContainer:
+      securityContext:
+        privileged: true
     connectContainer:
       env:
       - name: AWS_ACCESS_KEY_ID

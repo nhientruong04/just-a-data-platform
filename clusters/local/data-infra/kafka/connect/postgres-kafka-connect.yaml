@@ -51,3 +51,7 @@ spec:
         group: io.confluent
         artifact: kafka-connect-avro-converter
         version: 8.2.0
+  template:
+    buildContainer:
+      securityContext:
+        privileged: true
