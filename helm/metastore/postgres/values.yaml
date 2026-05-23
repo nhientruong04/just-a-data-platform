@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: postgres
-  tag: "18.3"
+  tag: "16.4"
 
 resources:
   requests:
