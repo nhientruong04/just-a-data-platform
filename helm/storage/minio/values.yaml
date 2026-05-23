@@ -56,7 +56,6 @@ auth:
     passwordKey: minio_password
 
 startup:
-  enabled: true
   name: dp-minio-startup
   script: |
     set -e

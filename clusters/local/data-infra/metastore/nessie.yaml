@@ -1,0 +1,18 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: data-infra-nessie
+  namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: data-platform
+  path: ./clusters/local/data-infra/metastore/nessie
+  prune: true
+  wait: true
+  timeout: 10m
+  dependsOn:
+  - name: data-infra-nessie-postgres
+  - name: data-infra-minio
+  - name: data-infra-platform-secrets

@@ -1,0 +1,18 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: data-infra-akhq
+  namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: data-platform
+  path: ./clusters/local/data-infra/ui/akhq
+  prune: true
+  wait: true
+  timeout: 10m
+  dependsOn:
+  - name: data-infra-kafka-cluster
+  - name: data-infra-kafka-connect
+  - name: data-infra-apicurio

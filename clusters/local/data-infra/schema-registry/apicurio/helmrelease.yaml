@@ -1,0 +1,17 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: apicurio
+  namespace: flux-system
+spec:
+  interval: 30m
+  releaseName: apicurio
+  targetNamespace: data-infra
+  chart:
+    spec:
+      chart: ./helm/schema-registry/apicurio
+      sourceRef:
+        kind: GitRepository
+        name: data-platform
+        namespace: flux-system
+      interval: 12h
