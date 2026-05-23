@@ -1,9 +1,11 @@
-{{- if .Values.startup.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ .Values.startup.name }}
   namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
   labels:
     {{- include "minio.labels" . | nindent 4 }}
 spec:
@@ -31,4 +33,3 @@ spec:
               name: {{ .Values.auth.secret.name }}
               key: {{ .Values.auth.secret.passwordKey }}
       restartPolicy: Never
-{{- end }}
