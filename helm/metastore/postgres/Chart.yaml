@@ -2,5 +2,5 @@ apiVersion: v2
 name: nessie-postgres
 description: PostgreSQL for Nessie metastore
 type: application
-version: 0.1.0
-appVersion: "18.3"
+version: 0.1.1
+appVersion: "16.3"
