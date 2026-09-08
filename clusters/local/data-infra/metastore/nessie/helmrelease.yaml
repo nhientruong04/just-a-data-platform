@@ -4,7 +4,7 @@ metadata:
   name: nessie
   namespace: flux-system
 spec:
-  interval: 30m
+  interval: 5m
   releaseName: nessie
   targetNamespace: data-infra
   upgrade:
@@ -17,4 +17,4 @@ spec:
         kind: GitRepository
         name: data-platform
         namespace: flux-system
-      interval: 12h
+      interval: 5m

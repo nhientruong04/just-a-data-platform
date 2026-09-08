@@ -13,7 +13,7 @@ metadata:
   name: strimzi-cluster-operator
   namespace: flux-system
 spec:
-  interval: 30m
+  interval: 5m
   releaseName: strimzi-cluster-operator
   targetNamespace: data-infra
   chart:
@@ -24,7 +24,7 @@ spec:
         kind: HelmRepository
         name: strimzi
         namespace: flux-system
-      interval: 12h
+      interval: 5m
   install:
     crds: CreateReplace
   upgrade:
