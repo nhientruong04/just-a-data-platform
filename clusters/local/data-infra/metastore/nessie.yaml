@@ -12,6 +12,9 @@ spec:
   prune: true
   wait: true
   timeout: 10m
+  upgrade:
+    remediation:
+      retries: 3
   dependsOn:
   - name: data-infra-nessie-postgres
   - name: data-infra-minio

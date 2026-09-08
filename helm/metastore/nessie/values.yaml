@@ -25,6 +25,7 @@ readinessProbe:
   httpGet:
     path: /q/health
     port: 9000
+  initialDelaySeconds: 15
   periodSeconds: 15
   timeoutSeconds: 2
 
