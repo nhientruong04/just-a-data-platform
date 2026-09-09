@@ -1,0 +1,41 @@
+image:
+  tag: "480"
+  pullPolicy: IfNotPresent
+
+# TODO: configure oauth2 authentication
+server:
+  workers: 0
+  config:
+    query:
+      maxMemory: 6GB
+
+catalogs:
+  objectstore: |
+    connector.name=iceberg
+    iceberg.catalog.type=nessie
+    iceberg.nessie-catalog.uri=https://dp-nessie-endpoint:19120/api/v2
+    iceberg.nessie-catalog.ref=main
+    iceberg.nessie-catalog.read-timeout=10s
+
+coordinator:
+  config:
+    nodeScheduler:
+      includeCoordinator: true
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 4Gi
+
+  readinessProbe:
+    initialDelaySeconds: 20
+    periodSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+
+  livenessProbe:
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 8
+    failureThreshold: 3
+    successThreshold: 1

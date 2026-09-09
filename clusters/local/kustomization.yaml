@@ -11,3 +11,4 @@ resources:
 - data-infra/schema-registry
 - data-infra/kafka
 - data-infra/ui
+- data-infra/engine

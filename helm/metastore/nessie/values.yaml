@@ -29,6 +29,7 @@ readinessProbe:
   periodSeconds: 15
   timeoutSeconds: 2
 
+# TODO: harness the power of flux orchestration, remove adhoc initContainers
 initContainers:
   enabled: true
   minioCheck:
