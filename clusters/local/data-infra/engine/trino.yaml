@@ -11,6 +11,6 @@ spec:
   path: ./clusters/local/data-infra/engine/trino
   prune: true
   wait: true
-  timeout: 15m
+  timeout: 30m
   dependsOn:
   - name: data-infra-nessie
