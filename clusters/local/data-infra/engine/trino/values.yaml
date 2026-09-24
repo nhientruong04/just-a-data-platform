@@ -22,7 +22,7 @@ env:
       key: minio_password
 
 catalogs:
-  objectstore: |
+  datalake: |
     connector.name=iceberg
     iceberg.catalog.type=nessie
     iceberg.nessie-catalog.uri=https://dp-nessie-endpoint:19120/api/v2
