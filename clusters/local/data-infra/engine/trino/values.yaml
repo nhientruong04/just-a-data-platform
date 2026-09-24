@@ -9,6 +9,18 @@ server:
     query:
       maxMemory: 6GB
 
+env:
+- name: MINIO_ACCESS_KEY
+  valueFrom:
+    secretKeyRef:
+      name: minio-secrets
+      key: minio_user
+- name: MINIO_SECRET_KEY
+  valueFrom:
+    secretKeyRef:
+      name: minio-secrets
+      key: minio_password
+
 catalogs:
   objectstore: |
     connector.name=iceberg
@@ -16,6 +28,13 @@ catalogs:
     iceberg.nessie-catalog.uri=https://dp-nessie-endpoint:19120/api/v2
     iceberg.nessie-catalog.ref=main
     iceberg.nessie-catalog.read-timeout=10s
+    iceberg.nessie-catalog.default-warehouse-dir=s3://datalake-silver-zone/iceberg/default
+    fs.native-s3.enabled=true
+    s3.endpoint=http://dp-minio-endpoint:9000
+    s3.region=us-east-1
+    s3.path-style-access=true
+    s3.aws-access-key=${ENV:MINIO_ACCESS_KEY}
+    s3.aws-secret-key=${ENV:MINIO_SECRET_KEY}
 
 coordinator:
   config:
