@@ -67,3 +67,5 @@ startup:
     mc alias set myminio http://dp-minio-endpoint:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
     mc admin info myminio
     mc mb myminio/datalake-bronze-zone --ignore-existing
+    mc mb myminio/datalake-silver-zone --ignore-existing
+    mc mb myminio/datalake-gold-zone --ignore-existing
